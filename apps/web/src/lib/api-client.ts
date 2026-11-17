@@ -3,6 +3,10 @@ type CsrfTokenResponse = { success: true; data: { token: string } };
 
 let csrfTokenRequest: Promise<string> | undefined;
 
+export function resetCsrfToken(): void {
+  csrfTokenRequest = undefined;
+}
+
 export class ApiError extends Error {
   constructor(
     message: string,
