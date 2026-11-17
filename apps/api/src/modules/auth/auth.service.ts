@@ -1,6 +1,7 @@
 import * as argon2 from 'argon2';
 import type { LoginRequest, RegistrationRequest } from '@mmm/validators';
 import { UserModel } from '../users/models/user.model';
+import { getOnboardingState } from '../onboarding/onboarding.service';
 
 export type AuthenticatedUser = {
   id: string;
@@ -62,5 +63,24 @@ export async function authenticateCredentials(
     id: user._id.toString(),
     name: user.name,
     email: user.email,
+  };
+}
+
+export async function getCurrentUser(userId: string) {
+  const user = await UserModel.findById(userId)
+    .select('name email preferredLanguage status')
+    .lean();
+  if (!user || user.status !== 'active') return null;
+  const onboarding = await getOnboardingState(userId);
+  return {
+    id: user._id.toString(),
+    name: user.name,
+    email: user.email,
+    preferredLanguage: user.preferredLanguage,
+    onboarding: {
+      status: onboarding.status,
+      currentStep: onboarding.currentStep,
+      weddingId: onboarding.weddingId,
+    },
   };
 }

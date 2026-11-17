@@ -160,6 +160,20 @@ describe('POST /api/v1/auth/register', () => {
   });
 });
 
+describe('protected onboarding API', () => {
+  it('requires a session to read onboarding progress and create a workspace', async () => {
+    const agent = request.agent(baseUrl);
+    await agent.get('/api/v1/onboarding/me').expect(401);
+    const csrfToken = (await agent.get('/api/v1/csrf-token')).body.data.token as string;
+    const response = await agent
+      .post('/api/v1/onboarding/complete')
+      .set('X-CSRF-Token', csrfToken)
+      .send({})
+      .expect(401);
+    expect(response.body.error.code).toBe('AUTHENTICATION_REQUIRED');
+  });
+});
+
 afterAll(async () => {
   if (server)
     await new Promise<void>((resolve, reject) =>

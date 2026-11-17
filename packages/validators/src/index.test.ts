@@ -4,6 +4,10 @@ import {
   loginRequestSchema,
   registrationFormSchema,
   registrationRequestSchema,
+  coupleDetailsFormSchema,
+  onboardingProgressPatchSchema,
+  partnerInvitationFormSchema,
+  weddingDetailsFormSchema,
 } from './index';
 
 describe('app language schema', () => {
@@ -58,5 +62,36 @@ describe('login request schema', () => {
 
   it('rejects missing or malformed credentials', () => {
     expect(loginRequestSchema.safeParse({ email: 'nope', password: '' }).success).toBe(false);
+  });
+});
+
+describe('onboarding schemas', () => {
+  it('requires the couple names and wedding location while allowing undecided date and venue', () => {
+    expect(
+      coupleDetailsFormSchema.safeParse({ groomName: 'Arjun', brideName: 'Mira' }).success,
+    ).toBe(true);
+    expect(weddingDetailsFormSchema.safeParse({ city: 'Jaipur', state: 'Rajasthan' }).success).toBe(
+      true,
+    );
+    expect(weddingDetailsFormSchema.safeParse({ city: '', state: '' }).success).toBe(false);
+  });
+
+  it('allows optional invitations and validates an entered address', () => {
+    expect(partnerInvitationFormSchema.safeParse({}).success).toBe(true);
+    expect(partnerInvitationFormSchema.safeParse({ email: 'not-an-email' }).success).toBe(false);
+  });
+
+  it('accepts an empty event selection and rejects an invalid step payload', () => {
+    expect(
+      onboardingProgressPatchSchema.safeParse({
+        step: 'wedding-events',
+        data: { events: [] },
+        completed: true,
+      }).success,
+    ).toBe(true);
+    expect(
+      onboardingProgressPatchSchema.safeParse({ step: 'couple-details', data: { groomName: 42 } })
+        .success,
+    ).toBe(false);
   });
 });

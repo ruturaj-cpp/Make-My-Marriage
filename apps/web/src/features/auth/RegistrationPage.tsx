@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   registrationFormSchema,
   type RegistrationFormValues,
@@ -20,6 +20,7 @@ export function RegistrationPage() {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [formError, setFormError] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
   const form = useForm<RegistrationFormValues>({ resolver: zodResolver(registrationFormSchema) });
   const registration = useMutation({
     mutationFn: (values: RegistrationFormValues) => {
@@ -33,7 +34,7 @@ export function RegistrationPage() {
         body: JSON.stringify(input),
       });
     },
-    onSuccess: () => navigate('/login?registered=1', { replace: true }),
+    onSuccess: () => navigate('/login?registered=1', { replace: true, state: location.state }),
     onError: (error: unknown) => {
       setFormError(
         error instanceof ApiError
@@ -177,7 +178,10 @@ export function RegistrationPage() {
           </form>
 
           <p className="login-register-prompt">
-            Already have an account? <Link to="/login">Log in</Link>
+            Already have an account?{' '}
+            <Link to="/login" state={location.state}>
+              Log in
+            </Link>
           </p>
           <p className="login-secure-note">
             <span aria-hidden="true">✦</span> Your details are private and secure

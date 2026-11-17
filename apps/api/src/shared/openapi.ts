@@ -7,6 +7,93 @@ export const openApiDocument = {
   },
   servers: [{ url: '/api/v1' }],
   paths: {
+    '/auth/me': {
+      get: {
+        summary: 'Retrieve the authenticated user and onboarding route status',
+        responses: {
+          '200': { description: 'Authenticated user and onboarding status' },
+          '401': { description: 'Authentication is required.' },
+        },
+      },
+    },
+    '/onboarding/me': {
+      get: {
+        summary: 'Get the authenticated user’s saved onboarding progress',
+        responses: {
+          '200': { description: 'Saved onboarding state' },
+          '401': { description: 'Authentication is required.' },
+        },
+      },
+      patch: {
+        summary: 'Save onboarding progress for the authenticated user',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['step', 'data'],
+                properties: {
+                  step: {
+                    type: 'string',
+                    enum: [
+                      'welcome',
+                      'couple-details',
+                      'wedding-details',
+                      'wedding-events',
+                      'invite-partner',
+                      'review',
+                    ],
+                  },
+                  data: { type: 'object' },
+                  completed: { type: 'boolean' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Progress saved' },
+          '401': { description: 'Authentication is required.' },
+          '409': { description: 'The onboarding step cannot be saved yet.' },
+          '422': { description: 'Request validation failed.' },
+        },
+      },
+    },
+    '/onboarding/complete': {
+      post: {
+        summary: 'Atomically create the wedding workspace and owner membership',
+        responses: {
+          '201': {
+            description:
+              'Workspace created; a pending invitation link is returned once if requested.',
+          },
+          '200': { description: 'Workspace already exists.' },
+          '401': { description: 'Authentication is required.' },
+          '409': { description: 'Required onboarding fields or membership conflict.' },
+        },
+      },
+    },
+    '/member-invitations/{token}/accept': {
+      post: {
+        summary: 'Accept a pending partner invitation with the invited account',
+        parameters: [
+          {
+            in: 'path',
+            name: 'token',
+            required: true,
+            schema: { type: 'string', minLength: 40, maxLength: 100 },
+          },
+        ],
+        responses: {
+          '200': { description: 'Invitation accepted and membership created.' },
+          '401': { description: 'Authentication is required.' },
+          '403': { description: 'Signed-in email does not match the invite.' },
+          '404': { description: 'Invitation not found.' },
+          '410': { description: 'Invitation expired or used.' },
+        },
+      },
+    },
     '/auth/register': {
       post: {
         summary: 'Register a user account',

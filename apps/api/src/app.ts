@@ -4,6 +4,7 @@ import express from 'express';
 import session from 'express-session';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
+import pino from 'pino';
 import MongoStore from 'connect-mongo';
 import pinoHttp from 'pino-http';
 import swaggerUi from 'swagger-ui-express';
@@ -15,6 +16,8 @@ import { csrfProtection } from './middleware/csrf-protection';
 import { logger } from './shared/logger';
 import { openApiDocument } from './shared/openapi';
 import { authRouter } from './modules/auth/auth.routes';
+import { onboardingRouter } from './modules/onboarding/onboarding.routes';
+import { memberInvitationRouter } from './modules/memberships/member-invitation.routes';
 
 export function createApp(sessionStore?: session.Store) {
   const app = express();
@@ -35,7 +38,23 @@ export function createApp(sessionStore?: session.Store) {
   );
   app.use(express.json({ limit: '1mb' }));
   app.use(cookieParser());
-  app.use(pinoHttp({ logger }));
+  app.use(
+    pinoHttp({
+      logger,
+      serializers: {
+        req: (request) => {
+          const serialized = pino.stdSerializers.req(request);
+          if (typeof serialized.url === 'string') {
+            serialized.url = serialized.url.replace(
+              /(\/member-invitations\/)[^/?]+(\/accept)/,
+              '$1[REDACTED]$2',
+            );
+          }
+          return serialized;
+        },
+      },
+    }),
+  );
   app.use(
     rateLimit({ windowMs: 60_000, limit: 120, standardHeaders: 'draft-8', legacyHeaders: false }),
   );
@@ -66,6 +85,8 @@ export function createApp(sessionStore?: session.Store) {
   app.use('/api/v1', csrfProtection);
   app.use('/api/v1/csrf-token', csrfTokenRouter);
   app.use('/api/v1/auth', authRouter);
+  app.use('/api/v1/onboarding', onboardingRouter);
+  app.use('/api/v1/member-invitations', memberInvitationRouter);
 
   app.use((_request, response) => {
     response.status(404).json({

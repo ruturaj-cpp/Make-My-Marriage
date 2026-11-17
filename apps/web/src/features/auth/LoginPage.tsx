@@ -28,10 +28,24 @@ export function LoginPage() {
         method: 'POST',
         body: JSON.stringify(credentials),
       }),
-    onSuccess: (response) => {
+    onSuccess: async (response) => {
       resetCsrfToken();
-      queryClient.setQueryData(['auth', 'me'], response.data.user);
-      navigate(destination, { replace: true });
+      try {
+        const me = await apiRequest<{
+          success: true;
+          data: { onboarding: { status: 'in_progress' | 'completed'; currentStep: string } };
+        }>('/auth/me');
+        queryClient.setQueryData(['auth', 'me'], me);
+        const next = returnTo
+          ? destination
+          : me.data.onboarding.status === 'completed'
+            ? '/dashboard'
+            : `/onboarding/${me.data.onboarding.currentStep}`;
+        navigate(next, { replace: true });
+      } catch {
+        queryClient.setQueryData(['auth', 'me'], { success: true, data: response.data.user });
+        navigate(returnTo ? destination : '/onboarding/welcome', { replace: true });
+      }
     },
     onError: (error: unknown) => {
       setFormError(
@@ -149,7 +163,10 @@ export function LoginPage() {
           </form>
 
           <p className="login-register-prompt">
-            Don&apos;t have an account? <Link to="/register">Create one</Link>
+            Don&apos;t have an account?{' '}
+            <Link to="/register" state={location.state}>
+              Create one
+            </Link>
           </p>
           <p className="login-secure-note">
             <span aria-hidden="true">✦</span> Your plans are private and secure
