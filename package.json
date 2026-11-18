@@ -13,9 +13,9 @@
     "dev:api": "pnpm --filter @mmm/api dev",
     "dev:worker": "pnpm --filter @mmm/worker dev",
     "build": "pnpm -r build",
-    "test": "pnpm -r test",
+    "test": "pnpm --filter @mmm/shared-types build && pnpm --filter @mmm/validators build && pnpm -r test",
     "lint": "eslint .",
-    "typecheck": "pnpm -r typecheck",
+    "typecheck": "pnpm --filter @mmm/shared-types build && pnpm --filter @mmm/validators build && pnpm -r typecheck",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

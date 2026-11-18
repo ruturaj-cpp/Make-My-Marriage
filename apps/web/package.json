@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "tsc -b && vite build",
-    "test": "vitest run",
-    "typecheck": "tsc -b --pretty false"
+    "build": "pnpm --filter @mmm/validators build && tsc -b && vite build",
+    "test": "pnpm --filter @mmm/validators build && vitest run",
+    "typecheck": "pnpm --filter @mmm/validators build && tsc -b --pretty false"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
